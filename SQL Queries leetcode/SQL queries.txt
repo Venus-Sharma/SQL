@@ -1,0 +1,298 @@
+   
+Write an SQL query to report the second highest salary from the Employee table. If there is no second highest salary, the query should report null.
+
+     SELECT max(Salary) as SecondHighestSalary 
+FROM
+(
+  SELECT Salary, DENSE_RANK() OVER(ORDER BY Salary DESC) AS Rank
+  FROM Employee
+) E
+WHERE (Rank = 2);
+
+
+2.Write an SQL query to report the nth highest salary from the Employee table. If there is no nth highest salary, the query should report null.
+
+CREATE FUNCTION getNthHighestSalary(@N INT) RETURNS INT AS
+BEGIN
+    RETURN (
+        /* Write your T-SQL query statement below. */
+        
+   SELECT distinct Salary as SecondHighestSalary 
+FROM
+(
+  SELECT Salary, DENSE_RANK() OVER(ORDER BY Salary DESC) AS Rank
+  FROM Employee
+) E
+WHERE (Rank = @N)
+     
+
+
+3. Write an SQL query to find the employees who earn more than their managers.
+
+select e1.name as Employee from employee e1 join employee e2 on 
+  e1.managerid = e2.id 
+    and 
+      e1.salary >e2.salary
+
+
+4.  Write an SQL query to find employees who have the highest salary in each of the departments.
+
+select d.name as Department , e.name as Employee, e.salary as Salary 
+from employee e join department d on e.departmentid = d.id
+ where  (e.departmentid ,salary ) in (select departmentid, max(salary) from employee group by departmentid );
+ 
+
+5. A company's executives are interested in seeing who earns the most money in each of the company's departments.
+ A high earner in a department is an employee who has a salary in the top three unique salaries for that department.
+Write an SQL query to find the employees who are high earners in each of the departments.
+ 
+select d.name as department , p.name as Employee ,  p.salary  as salary from (
+ select e.*,
+      dense_rank() over(partition by e.departmentid order by e.salary desc)as rn         
+     from employee e 
+    )  p 
+    join department d on p.departmentid = d.id
+   where rn <=3
+
+
+
+6. delete duplicate emails 
+
+
+DELETE FROM Person WHERE Id NOT IN
+( SELECT MIN(Id) FROM Person GROUP BY Email); 
+
+or 
+
+with cte as (
+select email, row_number() over(partition by email order by id  )as rn from person 
+ )
+ delete from cte where rn > 1;
+
+7.
+Write an SQL query to report the latest login for all users in the year 2020. Do not include the users who did not login in 2020.
+
+Return the result table in any order.
+
+select user_id, max(time_stamp) as last_stamp from logins where year = '2020';
+
+
+
+
+8.Write an SQL query to find the customer_number for the customer who has placed the largest number of orders.
+
+The test cases are generated so that exactly one customer will have placed more orders than any other customer.
+
+select top 1 customer_number from orders
+--(select customer_number,count(order_number) as count_order from orders 
+group by customer_number order by count(order_number)  desc  
+
+**************************8
+
+Follow up: What if more than one customer has the largest number of orders, can you find all the customer_number in this case?
+
+SELECT customer_number
+FROM orders
+Group BY customer_number
+HAVING  count(order_number) = 
+(SELECT max(numOfOrder)
+FROM
+    (SELECT customer_number,count(order_number) as numOfOrder
+    FROM orders
+    Group By customer_number) as temp)year(time_stamp) =2020 group by user_id 
+
+9.
+Each node in the tree can be one of three types:
+
+"Leaf": if the node is a leaf node.
+"Root": if the node is the root of the tree.
+"Inner": If the node is neither a leaf node nor a root node.
+Write an SQL query to report the type of each node in the tree.
+
+Return the result table ordered by id in ascending order.
+
+select id, case  
+             when p_id is null
+                then "Root" 
+             when id not in (select distinct p_id from tree where p_id is not null) 
+                then 'Leaf'
+              else 'Inner'
+           end as Type
+  from tree
+  order by id;
+
+
+10.Write an SQL query to report the movies with an odd-numbered ID and a description that is not "boring".
+
+Return the result table ordered by rating in descending order.
+
+select * from cinema where id%2 <> 0 and 
+   description not in (select description from cinema where description ="Boring") order by rating desc ;
+
+
+
+11. Write an SQL query to swap the seat id of every two consecutive students. If the number of students is odd, the id of the last student is not swapped.
+
+Return the result table ordered by id in ascending order.
+
+with counts as 
+    ( select count(*) as s_count from seat)
+    
+    
+select case 
+         when mod(id,2) != 0 and counts.s_count != id then id+1 
+         when mod(id,2) != 0 and counts.s_count = id then id
+         else id-1 
+         end as id, student from seat , counts 
+         order by id asc;
+
+
+
+
+
+12.Write an SQL query to swap all 'f' and 'm' values (i.e., change all 'f' values to 'm' and vice versa) with a single update statement and no intermediate temporary tables.
+
+Note that you must write a single update statement, do not write any select statement for this problem.
+
+/* Write your T-SQL query statement below */
+UPDATE salary
+SET
+sex = CASE 
+WHEN sex= 'm' THEN 'f'
+ELSE 'm'
+END;
+
+13.Write an SQL query that reports the products that were only sold in the first quarter of 2019. That is, between 2019-01-01 and 2019-03-31 inclusive.
+
+Return the result table in any order.
+
+SELECT product_id, product_name from Product
+where (product_id not in (SELECT distinct product_id from Sales where sale_date not between '2019-01-01' and '2019-03-31' ))
+and product_id in ( select product_id from sales)
+
+14.
+Write an SQL query to rearrange the Products table so that each row has (product_id, store, price). If a product is not available in a store, do not include a row with that product_id and store combination in the result table.
+
+Return the result table in any order.
+
+select product_id , 
+'store1' as store ,
+store1 as price  from products where store1 is not null
+
+union 
+
+select product_id , 
+'store2' as store ,
+store2 as price  from products where store2 is not null
+
+union 
+
+select product_id , 
+'store3' as store ,
+store3 as price  from products where store3 is not null
+
+JOIN
+ * JOIN combines data from many tables based on a matched condition between them
+  It combines data into new columns.
+  Number of columns selected from each table may not be same.
+  Datatypes of corresponding columns selected from each table can be different.
+  It may not return distinct columns.
+
+UNION 
+  SQL combines the result-set of two or more SELECT statements.
+  It combines data into new row
+  Number of columns selected from each table should be same.
+  Datatypes of corresponding columns selected from each table should be same.
+  It returns distinct rows.
+
+
+15.Write an SQL query to fix the names so that only the first character is uppercase and the rest are lowercase.
+
+Return the result table ordered by user_id.
+select user_id, concat(upper(substring(name,1,1)),lower(substring(name,2 ))) as name 
+from users
+order by user_id
+
+
+16. Write an SQL query to report the name and balance of users with a balance higher than 10000. The balance of an account is equal to the sum of the amounts of all transactions involving that account.
+
+Return the result table in any order.
+
+select users.name as name , sum(t.amount) as balance 
+from users, transactions t
+where users.account = t.account
+group by users.name 
+having sum(t.amount) > 10000;
+
+17.Write an SQL query to find the IDs of the users who visited without making any transactions and the number of times they made these types of visits.
+
+Return the result table sorted in any order.
+
+select  customer_id, count(*) as count_no_trans 
+from visits
+where visit_id not in  (select distinct visit_id from transactions)
+group by customer_id;
+
+18.Write an SQL query to find for each date the number of different products sold and their names.
+
+The sold products names for each date should be sorted lexicographically.
+
+Return the result table ordered by sell_date.
+ SELECT sell_date  , COUNT(DISTINCT PRODUCT) AS num_sold , GROUP_CONCAT(DISTINCT PRODUCT ORDER BY PRODUCT) AS products 
+FROM ACTIVITIES 
+GROUP BY SELL_DATE 
+ORDER BY SELL_DATE;
+
+
+19. Write an SQL query to report the distance traveled by each user.
+
+Return the result table ordered by travelled_distance in descending order, if two or more users traveled the same distance, order them by their name in ascending order.
+
+select name , sum(ifnull(distance,0)) as travelled_distance
+from users
+left join rides on users.id = rides.user_id
+group by user_id
+order by travelled_distance desc, name;
+*******************************************
+
+WITH CTE AS 
+(SELECT USER_ID,SUM(DISTANCE) AS D, DENSE_RANK() OVER ( ORDER BY SUM(DISTANCE) desc)AS RN FROM 
+RIDES 
+GROUP BY USER_ID)
+
+SELECT U.NAME AS name  , case  
+          when cte.rn is null then 0 
+          else 
+CTE.D 
+end AS travelled_distance
+FROM USERS U LEFT JOIN CTE 
+ON U.ID = CTE.USER_ID
+order by travelled_distance desc ,
+name asc ;
+
+
+20.Write an SQL query to reformat the table such that there is a department id column and a revenue column for each month.
+
+Return the result table in any order.
+
+select id,
+sum( if( month = 'jan', revenue, null ) ) as jan_revenue,
+sum( if( month = 'feb', revenue, null ) ) as feb_revenue,
+sum( if( month = 'mar', revenue, null ) ) as mar_revenue,
+sum( if( month = 'apr', revenue, null ) ) as apr_revenue,
+sum( if( month = 'may', revenue, null ) ) as may_revenue,
+sum( if( month = 'jun', revenue, null ) ) as jun_revenue,
+sum( if( month = 'jul', revenue, null ) ) as jul_revenue,
+sum( if( month = 'aug', revenue, null ) ) as aug_revenue,
+sum( if( month = 'sep', revenue, null ) ) as sep_revenue,
+sum( if( month = 'oct', revenue, null ) ) as oct_revenue,
+sum( if( month = 'nov', revenue, null ) ) as nov_revenue,
+sum( if( month = 'dec', revenue, null ) ) as dec_revenue
+from department
+group by id
+
+
+
+
+
+
